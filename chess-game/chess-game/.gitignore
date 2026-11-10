@@ -1,0 +1,45 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+*.aps
+*.ipch
+x64/
+x86/
+Debug/
+Release/
+ipch/
+
+# CMake / CLion / VS Code
+build/
+out/
+cmake-build-*/
+.idea/
+.vscode/
+CMakeUserPresets.json
+
+# Build outputs
+*.obj
+*.o
+*.pdb
+*.ilk
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.log
+*.tlog
+
+# Qt
+*.qm
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# Coverage
+*.coverage
+*.gcda
+*.gcno
