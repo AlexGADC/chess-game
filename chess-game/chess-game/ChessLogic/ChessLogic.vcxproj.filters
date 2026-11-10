@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="API">
+      <UniqueIdentifier>{6F0E1C2A-9B3D-4E5F-8A71-2C4D6E8F0A1B}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="API\ChessExceptions.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="API\EColor.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="API\EGameState.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="API\EPieceType.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="API\IGame.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="API\IGameListener.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="API\IPieceInfo.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="API\Position.h"><Filter>API</Filter></ClInclude>
+    <ClInclude Include="Board.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Piece.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Board.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Piece.cpp" />
+  </ItemGroup>
+</Project>

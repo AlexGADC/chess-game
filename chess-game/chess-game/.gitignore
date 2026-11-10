@@ -43,3 +43,6 @@ qrc_*.cpp
 *.coverage
 *.gcda
 *.gcno
+
+# vcpkg (GTest + GMock se descarca la build)
+vcpkg_installed/
