@@ -37,6 +37,8 @@
     <!-- GTest legat static: Test Explorer recunoaste exe-ul ca test doar daca GTest e in el, nu intr-un DLL. -->
     <VcpkgTriplet>x64-windows-static-md</VcpkgTriplet>
     <BundledVcpkgDir>$(VsInstallRoot)\VC\vcpkg\scripts\buildsystems\msbuild\</BundledVcpkgDir>
+    <VcpkgEnabled>true</VcpkgEnabled>
+    <VcpkgManifestInstall>true</VcpkgManifestInstall>
   </PropertyGroup>
   <!-- Foloseste vcpkg-ul inclus in Visual Studio, fara sa fie nevoie de "vcpkg integrate install". -->
   <Import Project="$(BundledVcpkgDir)vcpkg.props" Condition="'$(VcpkgPropsImported)' != 'true' and exists('$(BundledVcpkgDir)vcpkg.props')" />
