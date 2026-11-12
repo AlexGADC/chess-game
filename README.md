@@ -24,3 +24,8 @@ API-ul se schimba doar cu acordul intregii echipe.
 
 - Nu se lucreaza direct pe `main`: fiecare pe branch-ul lui, apoi pull request.
 - Fiecare PR e verificat de colegul din aceeasi pereche.
+
+## ChessUI este setat ca start up project!
+
+- Am adaugat la proiectul ChessUI ca directories si libraries folderele include, respectiv lib din fisierul dependencies
+  
