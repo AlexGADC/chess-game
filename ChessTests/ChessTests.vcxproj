@@ -39,6 +39,9 @@
     <BundledVcpkgDir>$(VsInstallRoot)\VC\vcpkg\scripts\buildsystems\msbuild\</BundledVcpkgDir>
     <VcpkgEnabled>true</VcpkgEnabled>
     <VcpkgManifestInstall>true</VcpkgManifestInstall>
+    <VcpkgAutoLink>true</VcpkgAutoLink>
+    <VcpkgApplocalDeps>true</VcpkgApplocalDeps>
+    <VcpkgXUseBuiltInApplocalDeps>true</VcpkgXUseBuiltInApplocalDeps>
   </PropertyGroup>
   <!-- Foloseste vcpkg-ul inclus in Visual Studio, fara sa fie nevoie de "vcpkg integrate install". -->
   <Import Project="$(BundledVcpkgDir)vcpkg.props" Condition="'$(VcpkgPropsImported)' != 'true' and exists('$(BundledVcpkgDir)vcpkg.props')" />
