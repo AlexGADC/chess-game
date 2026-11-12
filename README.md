@@ -27,5 +27,6 @@ API-ul se schimba doar cu acordul intregii echipe.
 
 ## ChessUI este setat ca start up project!
 
-- Am adaugat la proiectul ChessUI ca directories si libraries folderele include, respectiv lib din fisierul dependencies
+- Am modificat din librari statice la dinamice (pentru usurinta) tot ce trebuie facut este de verificat ca
+  la Proprieties > vcpkg > primele 6 optiuni de la general sa fie Yes (celelalte doua goale/nemodificate)
   
