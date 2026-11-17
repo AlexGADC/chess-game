@@ -1,8 +1,5 @@
 #pragma once
 
-// STUB TEMPORAR (Backend 1). Piece apartine lui Backend 2:
-// cand versiunea lui ajunge pe main, se pastreaza a lui si se sterge acest fisier.
-
 #include "IPieceInfo.h"
 
 #include <memory>
@@ -20,7 +17,11 @@ public:
 	EPieceType GetType() const override;
 	EColor GetColor() const override;
 
+	bool HasMoved() const;
+	void MarkMoved();
+
 private:
 	EPieceType m_type;
 	EColor m_color;
+	bool m_hasMoved;
 };

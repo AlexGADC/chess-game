@@ -1,5 +1,3 @@
-// STUB TEMPORAR (Backend 1). Vezi comentariul din Piece.h.
-
 #include "Piece.h"
 
 PiecePtr Piece::Produce(EPieceType type, EColor color)
@@ -10,6 +8,7 @@ PiecePtr Piece::Produce(EPieceType type, EColor color)
 Piece::Piece(EPieceType type, EColor color)
 	: m_type(type)
 	, m_color(color)
+	, m_hasMoved(false)
 {
 }
 
@@ -21,4 +20,14 @@ EPieceType Piece::GetType() const
 EColor Piece::GetColor() const
 {
 	return m_color;
+}
+
+bool Piece::HasMoved() const
+{
+	return m_hasMoved;
+}
+
+void Piece::MarkMoved()
+{
+	m_hasMoved = true;
 }

@@ -1,14 +1,11 @@
 #pragma once
 
-// STUB TEMPORAR (Backend 1). Board apartine lui Backend 2:
-// cand versiunea lui ajunge pe main, se pastreaza a lui si se sterge acest fisier.
-// Contine doar metodele publice pe care le foloseste Game, cu corpuri minime.
-
 #include "EColor.h"
 #include "Piece.h"
 #include "Position.h"
 
 #include <array>
+#include <optional>
 
 class Board
 {
@@ -31,4 +28,5 @@ public:
 
 private:
 	std::array<std::array<PiecePtr, SIZE>, SIZE> m_squares;
+	std::optional<Position> m_enPassantTarget;
 };
