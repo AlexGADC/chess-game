@@ -7,6 +7,9 @@
     <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="UIGameListener.cpp" />
     <ClCompile Include="FakeGame.cpp" />
+    <ClCompile Include="MenuScreen.cpp" />
+    <ClCompile Include="Button.cpp" />
+    <ClCompile Include="UIDrawing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
@@ -14,5 +17,9 @@
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="UIGameListener.h" />
     <ClInclude Include="FakeGame.h" />
+    <ClInclude Include="MenuScreen.h" />
+    <ClInclude Include="Button.h" />
+    <ClInclude Include="UIDrawing.h" />
+    <ClInclude Include="FontLoader.h" />
   </ItemGroup>
 </Project>

@@ -1,9 +1,9 @@
 #include "App.h"
 
 #include "ChessExceptions.h"
+#include "FontLoader.h"
 
 #include <algorithm>
-#include <stdexcept>
 
 namespace
 {
@@ -12,27 +12,31 @@ namespace
 	constexpr unsigned int STATUS_FONT_SIZE = 28;
 	constexpr unsigned int FRAMERATE_LIMIT = 60;
 
-	// Segoe UI Symbol ships with Windows and contains the chess glyphs.
-	// Replace with sprites later if you want custom piece art.
-	const char* FONT_PATH = "C:/Windows/Fonts/seguisym.ttf";
-
-	sf::Font LoadFont()
-	{
-		sf::Font font;
-		if (!font.openFromFile(FONT_PATH))
-		{
-			throw std::runtime_error(std::string("Could not load font: ") + FONT_PATH);
-		}
-		return font;
-	}
+	// Both fonts ship with Windows. Segoe UI Symbol has the chess glyphs.
+	const char* SYMBOL_FONT_PATH = "C:/Windows/Fonts/seguisym.ttf";
+	const char* MENU_FONT_PATH = "C:/Windows/Fonts/consolab.ttf";
 }
 
 App::App(IGamePtr game)
 	: m_game(std::move(game))
 	, m_listener(std::make_shared<UIGameListener>())
-	, m_window(sf::VideoMode({ BOARD_PIXELS, BOARD_PIXELS + STATUS_BAR_HEIGHT }), "Chess")
-	, m_font(LoadFont())
-	, m_boardView(m_font)
+	, m_window(
+		sf::VideoMode({ BOARD_PIXELS, BOARD_PIXELS + STATUS_BAR_HEIGHT }),
+		"Chess",
+		sf::Style::Titlebar | sf::Style::Close) // fixed size, so mouse pixels always match the layout
+	, m_symbolFont(LoadFontOrThrow(SYMBOL_FONT_PATH))
+	, m_menuFont(LoadFontOrThrow(MENU_FONT_PATH))
+	, m_boardView(m_symbolFont)
+	, m_mainMenu(
+		m_menuFont,
+		"Welcome to our chess game",
+		{ { "Play", EMenuAction::Play }, { "Settings", EMenuAction::Settings } },
+		m_window.getSize())
+	, m_settingsMenu(
+		m_menuFont,
+		"Settings",
+		{ { "Back", EMenuAction::Back } },
+		m_window.getSize())
 {
 	m_game->AddListener(m_listener);
 	m_window.setFramerateLimit(FRAMERATE_LIMIT);
@@ -71,6 +75,54 @@ void App::HandleEvents()
 
 void App::HandleLeftClick(sf::Vector2i pixel)
 {
+	switch (m_screen)
+	{
+	case EScreen::MainMenu:
+		ApplyMenuAction(m_mainMenu.GetClickedAction(pixel));
+		break;
+	case EScreen::Settings:
+		ApplyMenuAction(m_settingsMenu.GetClickedAction(pixel));
+		break;
+	case EScreen::Playing:
+		HandleBoardClick(pixel);
+		break;
+	}
+}
+
+void App::HandleKeyPress(sf::Keyboard::Key key)
+{
+	if (key == sf::Keyboard::Key::Escape)
+	{
+		m_screen = EScreen::MainMenu;
+		return;
+	}
+
+	if (m_screen == EScreen::Playing)
+	{
+		HandleGameKeyPress(key);
+	}
+}
+
+void App::ApplyMenuAction(EMenuAction action)
+{
+	switch (action)
+	{
+	case EMenuAction::Play:
+		m_screen = EScreen::Playing;
+		break;
+	case EMenuAction::Settings:
+		m_screen = EScreen::Settings;
+		break;
+	case EMenuAction::Back:
+		m_screen = EScreen::MainMenu;
+		break;
+	case EMenuAction::None:
+		break;
+	}
+}
+
+void App::HandleBoardClick(sf::Vector2i pixel)
+{
 	m_errorMessage.clear();
 
 	const EGameState state = m_game->GetState();
@@ -99,7 +151,7 @@ void App::HandleLeftClick(sf::Vector2i pixel)
 	}
 }
 
-void App::HandleKeyPress(sf::Keyboard::Key key)
+void App::HandleGameKeyPress(sf::Keyboard::Key key)
 {
 	if (key == sf::Keyboard::Key::F5)
 	{
@@ -174,16 +226,36 @@ void App::Render()
 {
 	m_window.clear(sf::Color(40, 40, 40));
 
-	m_boardView.SetLastMove(m_listener->GetLastMove());
-	m_boardView.Draw(m_window, *m_game);
-	DrawStatusBar();
+	const sf::Vector2i mousePosition = sf::Mouse::getPosition(m_window);
+
+	switch (m_screen)
+	{
+	case EScreen::MainMenu:
+		m_mainMenu.UpdateHover(mousePosition);
+		m_mainMenu.Draw(m_window);
+		break;
+	case EScreen::Settings:
+		m_settingsMenu.UpdateHover(mousePosition);
+		m_settingsMenu.Draw(m_window);
+		break;
+	case EScreen::Playing:
+		RenderGame();
+		break;
+	}
 
 	m_window.display();
 }
 
+void App::RenderGame()
+{
+	m_boardView.SetLastMove(m_listener->GetLastMove());
+	m_boardView.Draw(m_window, *m_game);
+	DrawStatusBar();
+}
+
 void App::DrawStatusBar()
 {
-	sf::Text text(m_font, BuildStatusText(), STATUS_FONT_SIZE);
+	sf::Text text(m_symbolFont, BuildStatusText(), STATUS_FONT_SIZE);
 	text.setFillColor(sf::Color::White);
 	text.setPosition({ 20.f, static_cast<float>(BOARD_PIXELS) + 12.f });
 	m_window.draw(text);
