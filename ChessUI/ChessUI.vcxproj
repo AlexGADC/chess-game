@@ -21,7 +21,10 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="BoardView.cpp" />
+    <ClCompile Include="Button.cpp" />
     <ClCompile Include="FakeGame.cpp" />
+    <ClCompile Include="MenuScreen.cpp" />
+    <ClCompile Include="UIDrawing.cpp" />
     <ClCompile Include="UIGameListener.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="TextureManager.cpp" />
@@ -29,7 +32,11 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="BoardView.h" />
+    <ClInclude Include="Button.h" />
     <ClInclude Include="FakeGame.h" />
+    <ClInclude Include="FontLoader.h" />
+    <ClInclude Include="MenuScreen.h" />
+    <ClInclude Include="UIDrawing.h" />
     <ClInclude Include="UIGameListener.h" />
     <ClInclude Include="TextureManager.h" />
   </ItemGroup>
