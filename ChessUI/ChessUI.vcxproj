@@ -24,6 +24,8 @@
     <ClCompile Include="Button.cpp" />
     <ClCompile Include="FakeGame.cpp" />
     <ClCompile Include="MenuScreen.cpp" />
+    <ClCompile Include="PlayerBarView.cpp" />
+    <ClCompile Include="TiledBackground.cpp" />
     <ClCompile Include="UIDrawing.cpp" />
     <ClCompile Include="UIGameListener.cpp" />
     <ClCompile Include="main.cpp" />
@@ -36,6 +38,8 @@
     <ClInclude Include="FakeGame.h" />
     <ClInclude Include="FontLoader.h" />
     <ClInclude Include="MenuScreen.h" />
+    <ClInclude Include="PlayerBarView.h" />
+    <ClInclude Include="TiledBackground.h" />
     <ClInclude Include="UIDrawing.h" />
     <ClInclude Include="UIGameListener.h" />
     <ClInclude Include="TextureManager.h" />
