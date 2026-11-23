@@ -10,6 +10,8 @@
     <ClCompile Include="MenuScreen.cpp" />
     <ClCompile Include="Button.cpp" />
     <ClCompile Include="UIDrawing.cpp" />
+    <ClCompile Include="PlayerBarView.cpp" />
+    <ClCompile Include="TiledBackground.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
@@ -21,5 +23,7 @@
     <ClInclude Include="Button.h" />
     <ClInclude Include="UIDrawing.h" />
     <ClInclude Include="FontLoader.h" />
+    <ClInclude Include="PlayerBarView.h" />
+    <ClInclude Include="TiledBackground.h" />
   </ItemGroup>
 </Project>

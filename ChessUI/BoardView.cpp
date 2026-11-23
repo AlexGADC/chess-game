@@ -16,8 +16,9 @@ namespace
 	const sf::Color BLACK_PIECE_COLOR(30, 30, 30);
 }
 
-BoardView::BoardView(const sf::Font& font)
+BoardView::BoardView(const sf::Font& font, sf::Vector2f origin)
 	: m_font(font)
+	, m_origin(origin)
 {
 }
 
@@ -83,13 +84,14 @@ void BoardView::Draw(sf::RenderTarget& target, const IGame& game) const
 
 std::optional<Position> BoardView::PixelToPosition(sf::Vector2i pixel) const
 {
-	if (pixel.x < 0 || pixel.y < 0)
+	const sf::Vector2f boardPoint = sf::Vector2f(pixel) - m_origin;
+	if (boardPoint.x < 0.f || boardPoint.y < 0.f)
 	{
 		return std::nullopt;
 	}
 
-	const int col = static_cast<int>(pixel.x / SQUARE_SIZE);
-	const int rowFromTop = static_cast<int>(pixel.y / SQUARE_SIZE);
+	const int col = static_cast<int>(boardPoint.x / SQUARE_SIZE);
+	const int rowFromTop = static_cast<int>(boardPoint.y / SQUARE_SIZE);
 	if (col >= BOARD_SIZE || rowFromTop >= BOARD_SIZE)
 	{
 		return std::nullopt;
@@ -98,9 +100,9 @@ std::optional<Position> BoardView::PixelToPosition(sf::Vector2i pixel) const
 	return Position{ BOARD_SIZE - 1 - rowFromTop, col };
 }
 
-sf::Vector2f BoardView::PositionToPixel(Position position)
+sf::Vector2f BoardView::PositionToPixel(Position position) const
 {
-	return { position.col * SQUARE_SIZE, (BOARD_SIZE - 1 - position.row) * SQUARE_SIZE };
+	return m_origin + sf::Vector2f(position.col * SQUARE_SIZE, (BOARD_SIZE - 1 - position.row) * SQUARE_SIZE);
 }
 
 const char32_t* BoardView::GetGlyph(EPieceType type)

@@ -11,7 +11,11 @@ enum class EMenuAction
 {
 	None,
 	Play,
+	PlayBullet,
+	PlayBlitz,
+	PlayRapid,
 	Settings,
+	ToggleFullscreen,
 	Back
 };
 
@@ -21,12 +25,13 @@ struct MenuEntry
 	EMenuAction action;
 };
 
-// A screen made of a title and a vertical list of buttons, on a dirt-like background.
-// Used for both the main menu and the settings screen.
+// A screen made of a title and a vertical list of buttons, centered in `layoutSize`.
+// Used for the main menu, the time control screen and the settings screen.
+// The background behind it is drawn by the caller.
 class MenuScreen
 {
 public:
-	MenuScreen(const sf::Font& font, std::string title, const std::vector<MenuEntry>& entries, sf::Vector2u windowSize);
+	MenuScreen(const sf::Font& font, std::string title, const std::vector<MenuEntry>& entries, sf::Vector2u layoutSize);
 
 	void UpdateHover(sf::Vector2i mousePosition);
 
@@ -42,11 +47,8 @@ private:
 		EMenuAction action;
 	};
 
-	void BuildBackground(sf::Vector2u windowSize);
-
 	const sf::Font& m_font;
 	std::string m_title;
 	sf::Vector2f m_titleCenter;
 	std::vector<MenuItem> m_items;
-	sf::VertexArray m_background;
 };

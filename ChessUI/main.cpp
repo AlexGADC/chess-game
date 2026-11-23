@@ -11,7 +11,7 @@ int main()
 		// TODO: when ChessLogic is ready, replace the line below with:
 		//   IGamePtr game = IGame::Produce();
 		// (and add a project reference from ChessUI to ChessLogic).
-		IGamePtr game = std::make_shared<FakeGame>();
+		IGamePtr game = std::make_shared<FakeGame>(); // IGame::Produce()
 
 		App app(game);
 		app.Run();

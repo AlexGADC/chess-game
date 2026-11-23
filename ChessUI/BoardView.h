@@ -15,7 +15,8 @@ class BoardView
 public:
 	static constexpr float SQUARE_SIZE = 100.f;
 
-	explicit BoardView(const sf::Font& font);
+	// `origin` is the top-left corner of the board on the screen.
+	BoardView(const sf::Font& font, sf::Vector2f origin);
 
 	void SetSelection(std::optional<Position> selected, PositionList possibleMoves);
 	void SetLastMove(std::optional<std::pair<Position, Position>> lastMove);
@@ -27,7 +28,7 @@ public:
 
 private:
 	// row 0 is the white base rank, so it is drawn at the bottom of the screen.
-	static sf::Vector2f PositionToPixel(Position position);
+	sf::Vector2f PositionToPixel(Position position) const;
 	static const char32_t* GetGlyph(EPieceType type);
 
 	void DrawSquare(sf::RenderTarget& target, Position position, sf::Color color) const;
@@ -36,6 +37,7 @@ private:
 	std::optional<Position> FindKing(const IGame& game, EColor color) const;
 
 	const sf::Font& m_font;
+	sf::Vector2f m_origin;
 	std::optional<Position> m_selected;
 	PositionList m_possibleMoves;
 	std::optional<std::pair<Position, Position>> m_lastMove;
