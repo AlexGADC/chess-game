@@ -2,9 +2,12 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="MockGameListener.h" />
+    <ClInclude Include="TestHelpers.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BoardTest.cpp" />
     <ClCompile Include="GameTest.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PieceTest.cpp" />
   </ItemGroup>
 </Project>
