@@ -2,313 +2,68 @@
 
 #include "ChessExceptions.h"
 
-#include <array>
+#include <algorithm>
 #include <cstdlib>
+#include <initializer_list>
 #include <utility>
 
 namespace
 {
-	constexpr EColor Opposite(EColor color)
-	{
-		return color == EColor::White ? EColor::Black : EColor::White;
-	}
+	const char* OUT_OF_BOUNDS_MESSAGE = "Position outside the board.";
 
-	constexpr int PawnDir(EColor color)
-	{
-		return color == EColor::White ? 1 : -1;
-	}
+	constexpr int CASTLING_KING_DISTANCE = 2;
+	constexpr int PAWN_DOUBLE_STEP_DISTANCE = 2;
 
-	constexpr int PawnStartRow(EColor color)
-	{
-		return color == EColor::White ? 1 : Board::SIZE - 2;
-	}
+	constexpr char EMPTY_SQUARE_SYMBOL = '.';
+	constexpr char FIRST_WHITE_PIECE_SYMBOL = 'A';
+	constexpr char FIRST_BLACK_PIECE_SYMBOL = 'a';
+	constexpr char CASTLING_RIGHT_SYMBOL = '1';
+	constexpr char NO_CASTLING_RIGHT_SYMBOL = '0';
 
-	constexpr int BackRow(EColor color)
+	// Every square of the board, so the code can use one loop instead of a nested pair.
+	const PositionList& GetAllSquares()
 	{
-		return color == EColor::White ? 0 : Board::SIZE - 1;
-	}
-
-	struct Cell
-	{
-		bool occupied = false;
-		EPieceType type{};
-		EColor color{};
-		bool moved = false;
-	};
-
-	using Grid = std::array<std::array<Cell, Board::SIZE>, Board::SIZE>;
-
-	Grid BuildGrid(const Board& board)
-	{
-		Grid grid{};
-		for (int r = 0; r < Board::SIZE; ++r)
+		static const PositionList squares = []
 		{
-			for (int c = 0; c < Board::SIZE; ++c)
+			PositionList all;
+			for (int row = 0; row < BOARD_SIZE; ++row)
 			{
-				PiecePtr piece = board.GetPiece(Position{ r, c });
-				if (piece)
+				for (int col = 0; col < BOARD_SIZE; ++col)
 				{
-					grid[r][c].occupied = true;
-					grid[r][c].type = piece->GetType();
-					grid[r][c].color = piece->GetColor();
-					grid[r][c].moved = piece->HasMoved();
+					all.push_back(Position{ row, col });
 				}
 			}
-		}
-		return grid;
+			return all;
+		}();
+		return squares;
 	}
 
-	bool Inside(int r, int c)
+	bool Contains(const PositionList& positions, Position position)
 	{
-		return r >= 0 && r < Board::SIZE && c >= 0 && c < Board::SIZE;
+		return std::find(positions.begin(), positions.end(), position) != positions.end();
 	}
 
-	constexpr std::array<std::pair<int, int>, 4> kRookDirs{ { { 1, 0 },{ -1, 0 },{ 0, 1 },{ 0, -1 } } };
-	constexpr std::array<std::pair<int, int>, 4> kBishopDirs{ { { 1, 1 },{ 1, -1 },{ -1, 1 },{ -1, -1 } } };
-	constexpr std::array<std::pair<int, int>, 8> kKnightJumps{ { { 2, 1 },{ 2, -1 },{ -2, 1 },{ -2, -1 },
-																  { 1, 2 },{ 1, -2 },{ -1, 2 },{ -1, -2 } } };
-	constexpr std::array<std::pair<int, int>, 8> kKingSteps{ { { 1, 0 },{ -1, 0 },{ 0, 1 },{ 0, -1 },
-															   { 1, 1 },{ 1, -1 },{ -1, 1 },{ -1, -1 } } };
-
-	bool IsAttacked(const Grid& g, int r, int c, EColor by)
+	bool IsLightSquare(Position position)
 	{
-		const int dir = PawnDir(by);
-		for (int dc : { -1, 1 })
+		return (position.row + position.col) % 2 == 1;
+	}
+
+	bool AreAllOnSameSquareColor(const PositionList& positions)
+	{
+		return std::all_of(positions.begin(), positions.end(),
+			[&positions](Position position) { return IsLightSquare(position) == IsLightSquare(positions.front()); });
+	}
+
+	// One character per square: a different letter for each piece type and color.
+	char GetSquareSymbol(const PiecePtr& piece)
+	{
+		if (!piece)
 		{
-			const int pr = r - dir;
-			const int pc = c + dc;
-			if (Inside(pr, pc) && g[pr][pc].occupied
-				&& g[pr][pc].color == by && g[pr][pc].type == EPieceType::Pawn)
-				return true;
+			return EMPTY_SQUARE_SYMBOL;
 		}
 
-		for (auto [dr, dc] : kKnightJumps)
-		{
-			const int nr = r + dr, nc = c + dc;
-			if (Inside(nr, nc) && g[nr][nc].occupied
-				&& g[nr][nc].color == by && g[nr][nc].type == EPieceType::Knight)
-				return true;
-		}
-
-		for (auto [dr, dc] : kKingSteps)
-		{
-			const int nr = r + dr, nc = c + dc;
-			if (Inside(nr, nc) && g[nr][nc].occupied
-				&& g[nr][nc].color == by && g[nr][nc].type == EPieceType::King)
-				return true;
-		}
-
-		for (auto [dr, dc] : kRookDirs)
-		{
-			int nr = r + dr, nc = c + dc;
-			while (Inside(nr, nc))
-			{
-				if (g[nr][nc].occupied)
-				{
-					if (g[nr][nc].color == by
-						&& (g[nr][nc].type == EPieceType::Rook || g[nr][nc].type == EPieceType::Queen))
-						return true;
-					break;
-				}
-				nr += dr;
-				nc += dc;
-			}
-		}
-
-		for (auto [dr, dc] : kBishopDirs)
-		{
-			int nr = r + dr, nc = c + dc;
-			while (Inside(nr, nc))
-			{
-				if (g[nr][nc].occupied)
-				{
-					if (g[nr][nc].color == by
-						&& (g[nr][nc].type == EPieceType::Bishop || g[nr][nc].type == EPieceType::Queen))
-						return true;
-					break;
-				}
-				nr += dr;
-				nc += dc;
-			}
-		}
-
-		return false;
-	}
-
-	bool FindKing(const Grid& g, EColor color, int& kr, int& kc)
-	{
-		for (int r = 0; r < Board::SIZE; ++r)
-			for (int c = 0; c < Board::SIZE; ++c)
-				if (g[r][c].occupied && g[r][c].color == color && g[r][c].type == EPieceType::King)
-				{
-					kr = r;
-					kc = c;
-					return true;
-				}
-		return false;
-	}
-
-	bool IsKingInCheck(const Grid& g, EColor color)
-	{
-		int kr = 0, kc = 0;
-		if (!FindKing(g, color, kr, kc))
-			return false;
-		return IsAttacked(g, kr, kc, Opposite(color));
-	}
-
-	void AddSliding(const Grid& g, int r, int c, EColor color, int dr, int dc, PositionList& out)
-	{
-		int nr = r + dr, nc = c + dc;
-		while (Inside(nr, nc))
-		{
-			if (g[nr][nc].occupied)
-			{
-				if (g[nr][nc].color != color)
-					out.push_back(Position{ nr, nc });
-				break;
-			}
-			out.push_back(Position{ nr, nc });
-			nr += dr;
-			nc += dc;
-		}
-	}
-
-	void AddStep(const Grid& g, int nr, int nc, EColor color, PositionList& out)
-	{
-		if (!Inside(nr, nc))
-			return;
-		if (!g[nr][nc].occupied || g[nr][nc].color != color)
-			out.push_back(Position{ nr, nc });
-	}
-
-	bool IsCastlingRook(const Grid& g, int r, int c, EColor color)
-	{
-		return g[r][c].occupied && g[r][c].type == EPieceType::Rook
-			&& g[r][c].color == color && !g[r][c].moved;
-	}
-
-	void AddCastling(const Grid& g, int r, int c, EColor color, PositionList& out)
-	{
-		if (g[r][c].moved || r != BackRow(color) || c != 4)
-			return;
-
-		const EColor enemy = Opposite(color);
-		if (IsAttacked(g, r, c, enemy))
-			return;
-
-		if (IsCastlingRook(g, r, 7, color)
-			&& !g[r][5].occupied && !g[r][6].occupied
-			&& !IsAttacked(g, r, 5, enemy))
-			out.push_back(Position{ r, 6 });
-
-		if (IsCastlingRook(g, r, 0, color)
-			&& !g[r][1].occupied && !g[r][2].occupied && !g[r][3].occupied
-			&& !IsAttacked(g, r, 3, enemy))
-			out.push_back(Position{ r, 2 });
-	}
-
-	PositionList PseudoLegalMoves(const Grid& g, int r, int c, const std::optional<Position>& enPassant)
-	{
-		PositionList moves;
-		const Cell& cell = g[r][c];
-		if (!cell.occupied)
-			return moves;
-
-		const EColor color = cell.color;
-
-		switch (cell.type)
-		{
-		case EPieceType::Pawn:
-		{
-			const int dir = PawnDir(color);
-			const int oneR = r + dir;
-			if (Inside(oneR, c) && !g[oneR][c].occupied)
-			{
-				moves.push_back(Position{ oneR, c });
-				const int twoR = r + 2 * dir;
-				if (r == PawnStartRow(color) && Inside(twoR, c) && !g[twoR][c].occupied)
-					moves.push_back(Position{ twoR, c });
-			}
-			for (int dc : { -1, 1 })
-			{
-				const int nc = c + dc;
-				if (!Inside(oneR, nc))
-					continue;
-				if (g[oneR][nc].occupied)
-				{
-					if (g[oneR][nc].color != color)
-						moves.push_back(Position{ oneR, nc });
-				}
-				else if (enPassant && enPassant->row == oneR && enPassant->col == nc
-					&& g[r][nc].occupied && g[r][nc].type == EPieceType::Pawn && g[r][nc].color != color)
-				{
-					moves.push_back(Position{ oneR, nc });
-				}
-			}
-			break;
-		}
-		case EPieceType::Knight:
-			for (auto [dr, dc] : kKnightJumps)
-				AddStep(g, r + dr, c + dc, color, moves);
-			break;
-		case EPieceType::Bishop:
-			for (auto [dr, dc] : kBishopDirs)
-				AddSliding(g, r, c, color, dr, dc, moves);
-			break;
-		case EPieceType::Rook:
-			for (auto [dr, dc] : kRookDirs)
-				AddSliding(g, r, c, color, dr, dc, moves);
-			break;
-		case EPieceType::Queen:
-			for (auto [dr, dc] : kRookDirs)
-				AddSliding(g, r, c, color, dr, dc, moves);
-			for (auto [dr, dc] : kBishopDirs)
-				AddSliding(g, r, c, color, dr, dc, moves);
-			break;
-		case EPieceType::King:
-			for (auto [dr, dc] : kKingSteps)
-				AddStep(g, r + dr, c + dc, color, moves);
-			AddCastling(g, r, c, color, moves);
-			break;
-		}
-		return moves;
-	}
-
-	void ApplyMove(Grid& g, Position from, Position to)
-	{
-		Cell moving = g[from.row][from.col];
-
-		if (moving.type == EPieceType::Pawn && from.col != to.col && !g[to.row][to.col].occupied)
-			g[from.row][to.col] = Cell{};
-
-		if (moving.type == EPieceType::King && std::abs(to.col - from.col) == 2)
-		{
-			const int rookFrom = to.col > from.col ? Board::SIZE - 1 : 0;
-			const int rookTo = to.col > from.col ? 5 : 3;
-			g[from.row][rookTo] = g[from.row][rookFrom];
-			g[from.row][rookFrom] = Cell{};
-		}
-
-		moving.moved = true;
-		g[to.row][to.col] = moving;
-		g[from.row][from.col] = Cell{};
-	}
-
-	PositionList LegalMoves(const Grid& g, int r, int c, const std::optional<Position>& enPassant)
-	{
-		PositionList result;
-		if (!g[r][c].occupied)
-			return result;
-
-		const EColor color = g[r][c].color;
-		for (const Position& to : PseudoLegalMoves(g, r, c, enPassant))
-		{
-			Grid copy = g;
-			ApplyMove(copy, Position{ r, c }, to);
-			if (!IsKingInCheck(copy, color))
-				result.push_back(to);
-		}
-		return result;
+		const char firstSymbol = piece->GetColor() == EColor::White ? FIRST_WHITE_PIECE_SYMBOL : FIRST_BLACK_PIECE_SYMBOL;
+		return static_cast<char>(firstSymbol + static_cast<int>(piece->GetType()));
 	}
 }
 
@@ -318,30 +73,60 @@ bool Board::IsInside(Position position)
 		&& position.col >= 0 && position.col < SIZE;
 }
 
-void Board::Reset()
+Board::Board(const Board& other)
+	: m_enPassantTarget(other.m_enPassantTarget)
+{
+	for (const Position& square : GetAllSquares())
+	{
+		const PiecePtr& piece = other.m_squares[square.row][square.col];
+		m_squares[square.row][square.col] = piece ? piece->Clone() : nullptr;
+	}
+}
+
+Board& Board::operator=(const Board& other)
+{
+	if (this != &other)
+	{
+		Board copy(other);
+		*this = std::move(copy);
+	}
+	return *this;
+}
+
+void Board::Clear()
 {
 	for (auto& row : m_squares)
+	{
 		row.fill(nullptr);
+	}
 
 	m_enPassantTarget.reset();
+}
 
-	constexpr std::array<EPieceType, SIZE> backRow{
+void Board::Reset()
+{
+	Clear();
+
+	constexpr std::array<EPieceType, SIZE> backRowOrder{
 		EPieceType::Rook, EPieceType::Knight, EPieceType::Bishop, EPieceType::Queen,
 		EPieceType::King, EPieceType::Bishop, EPieceType::Knight, EPieceType::Rook };
 
-	for (int c = 0; c < SIZE; ++c)
+	for (EColor color : { EColor::White, EColor::Black })
 	{
-		m_squares[0][c] = Piece::Produce(backRow[c], EColor::White);
-		m_squares[1][c] = Piece::Produce(EPieceType::Pawn, EColor::White);
-		m_squares[SIZE - 2][c] = Piece::Produce(EPieceType::Pawn, EColor::Black);
-		m_squares[SIZE - 1][c] = Piece::Produce(backRow[c], EColor::Black);
+		for (int col = 0; col < SIZE; ++col)
+		{
+			m_squares[GetBackRow(color)][col] = Piece::Produce(backRowOrder[col], color);
+			m_squares[GetPawnStartRow(color)][col] = Piece::Produce(EPieceType::Pawn, color);
+		}
 	}
 }
 
 PiecePtr Board::GetPiece(Position position) const
 {
 	if (!IsInside(position))
-		throw OutOfBoundsException("Pozitie in afara tablei.");
+	{
+		throw OutOfBoundsException(OUT_OF_BOUNDS_MESSAGE);
+	}
 	return m_squares[position.row][position.col];
 }
 
@@ -350,72 +135,236 @@ bool Board::IsEmpty(Position position) const
 	return GetPiece(position) == nullptr;
 }
 
+void Board::PlacePiece(Position position, PiecePtr piece)
+{
+	if (!IsInside(position))
+	{
+		throw OutOfBoundsException(OUT_OF_BOUNDS_MESSAGE);
+	}
+	m_squares[position.row][position.col] = std::move(piece);
+}
+
 void Board::MovePiece(Position from, Position to)
 {
 	if (!IsInside(from) || !IsInside(to))
-		throw OutOfBoundsException("Pozitie in afara tablei.");
-	if (from == to)
-		return;
-
-	PiecePtr piece = m_squares[from.row][from.col];
-	if (!piece)
-		return;
-
-	const EPieceType type = piece->GetType();
-
-	if (type == EPieceType::Pawn && from.col != to.col && m_squares[to.row][to.col] == nullptr)
-		m_squares[from.row][to.col] = nullptr;
-
-	if (type == EPieceType::King && std::abs(to.col - from.col) == 2)
 	{
-		const int rookFrom = to.col > from.col ? SIZE - 1 : 0;
-		const int rookTo = to.col > from.col ? 5 : 3;
-		PiecePtr rook = m_squares[from.row][rookFrom];
-		if (rook)
-		{
-			m_squares[from.row][rookTo] = rook;
-			m_squares[from.row][rookFrom] = nullptr;
-			rook->MarkMoved();
-		}
+		throw OutOfBoundsException(OUT_OF_BOUNDS_MESSAGE);
+	}
+
+	const PiecePtr piece = m_squares[from.row][from.col];
+	if (!piece || from == to)
+	{
+		return;
+	}
+
+	const bool isPawn = piece->GetType() == EPieceType::Pawn;
+	const bool isKing = piece->GetType() == EPieceType::King;
+
+	// A pawn that moves diagonally onto an empty square is capturing en passant:
+	// the captured pawn is beside the starting square, not on the destination.
+	if (isPawn && from.col != to.col && IsEmpty(to))
+	{
+		m_squares[from.row][to.col] = nullptr;
+	}
+
+	if (isKing && std::abs(to.col - from.col) == CASTLING_KING_DISTANCE)
+	{
+		MoveCastlingRook(from.row, to.col);
 	}
 
 	m_enPassantTarget.reset();
-	if (type == EPieceType::Pawn && std::abs(to.row - from.row) == 2)
+	if (isPawn && std::abs(to.row - from.row) == PAWN_DOUBLE_STEP_DISTANCE)
+	{
 		m_enPassantTarget = Position{ (from.row + to.row) / 2, from.col };
+	}
 
 	m_squares[to.row][to.col] = piece;
 	m_squares[from.row][from.col] = nullptr;
 	piece->MarkMoved();
 }
 
-void Board::ReplacePiece(Position position, PiecePtr piece)
+void Board::MoveCastlingRook(int row, int kingEndCol)
 {
-	if (!IsInside(position))
-		throw OutOfBoundsException("Pozitie in afara tablei.");
-	m_squares[position.row][position.col] = piece;
+	for (const CastlingSide& side : CASTLING_SIDES)
+	{
+		const PiecePtr rook = m_squares[row][side.rookStartCol];
+		if (side.kingEndCol == kingEndCol && rook)
+		{
+			m_squares[row][side.rookEndCol] = rook;
+			m_squares[row][side.rookStartCol] = nullptr;
+			rook->MarkMoved();
+		}
+	}
 }
 
 PositionList Board::GetLegalMoves(Position from) const
 {
 	if (!IsInside(from) || IsEmpty(from))
+	{
 		return {};
+	}
 
-	const Grid grid = BuildGrid(*this);
-	return LegalMoves(grid, from.row, from.col, m_enPassantTarget);
-}
+	const PiecePtr piece = GetPiece(from);
+	PositionList legalMoves;
 
-bool Board::IsInCheck(EColor color) const
-{
-	return IsKingInCheck(BuildGrid(*this), color);
+	for (const Position& to : piece->GetPseudoLegalMoves(*this, from))
+	{
+		Board boardAfterMove(*this);
+		boardAfterMove.MovePiece(from, to);
+		if (!boardAfterMove.IsInCheck(piece->GetColor()))
+		{
+			legalMoves.push_back(to);
+		}
+	}
+
+	return legalMoves;
 }
 
 bool Board::HasAnyLegalMove(EColor color) const
 {
-	const Grid grid = BuildGrid(*this);
-	for (int r = 0; r < SIZE; ++r)
-		for (int c = 0; c < SIZE; ++c)
-			if (grid[r][c].occupied && grid[r][c].color == color
-				&& !LegalMoves(grid, r, c, m_enPassantTarget).empty())
-				return true;
+	for (const Position& square : GetAllSquares())
+	{
+		const PiecePtr& piece = m_squares[square.row][square.col];
+		if (piece && piece->GetColor() == color && !GetLegalMoves(square).empty())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Board::IsSquareAttacked(Position position, EColor attackerColor) const
+{
+	for (const Position& square : GetAllSquares())
+	{
+		const PiecePtr& piece = m_squares[square.row][square.col];
+		if (piece && piece->GetColor() == attackerColor
+			&& Contains(piece->GetAttackedSquares(*this, square), position))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Board::IsInCheck(EColor color) const
+{
+	const std::optional<Position> king = FindKing(color);
+	return king && IsSquareAttacked(*king, GetOpponent(color));
+}
+
+std::optional<Position> Board::FindKing(EColor color) const
+{
+	for (const Position& square : GetAllSquares())
+	{
+		const PiecePtr& piece = m_squares[square.row][square.col];
+		if (piece && piece->GetType() == EPieceType::King && piece->GetColor() == color)
+		{
+			return square;
+		}
+	}
+	return std::nullopt;
+}
+
+std::optional<Position> Board::GetEnPassantTarget() const
+{
+	return m_enPassantTarget;
+}
+
+bool Board::HasCastlingRight(EColor color, const CastlingSide& side) const
+{
+	const int backRow = GetBackRow(color);
+	return IsUnmovedPiece(Position{ backRow, KING_START_COL }, EPieceType::King, color)
+		&& IsUnmovedPiece(Position{ backRow, side.rookStartCol }, EPieceType::Rook, color);
+}
+
+bool Board::IsUnmovedPiece(Position position, EPieceType type, EColor color) const
+{
+	const PiecePtr& piece = m_squares[position.row][position.col];
+	return piece && piece->GetType() == type && piece->GetColor() == color && !piece->HasMoved();
+}
+
+bool Board::HasInsufficientMaterial() const
+{
+	PositionList bishopSquares;
+	int knightCount = 0;
+
+	for (const Position& square : GetAllSquares())
+	{
+		const PiecePtr& piece = m_squares[square.row][square.col];
+		if (!piece || piece->GetType() == EPieceType::King)
+		{
+			continue;
+		}
+
+		if (piece->GetType() == EPieceType::Bishop)
+		{
+			bishopSquares.push_back(square);
+		}
+		else if (piece->GetType() == EPieceType::Knight)
+		{
+			++knightCount;
+		}
+		else
+		{
+			// A pawn, a rook or a queen is always enough to give mate.
+			return false;
+		}
+	}
+
+	if (knightCount == 0)
+	{
+		// Only kings, or kings and bishops that all stand on the same square color.
+		return AreAllOnSameSquareColor(bishopSquares);
+	}
+
+	// A single knight with nothing else cannot give mate.
+	return knightCount == 1 && bishopSquares.empty();
+}
+
+std::string Board::GetPositionKey() const
+{
+	std::string key;
+
+	for (const Position& square : GetAllSquares())
+	{
+		key += GetSquareSymbol(m_squares[square.row][square.col]);
+	}
+
+	for (EColor color : { EColor::White, EColor::Black })
+	{
+		for (const CastlingSide& side : CASTLING_SIDES)
+		{
+			key += HasCastlingRight(color, side) ? CASTLING_RIGHT_SYMBOL : NO_CASTLING_RIGHT_SYMBOL;
+		}
+	}
+
+	// The en passant square only makes the position different while a pawn can really capture there.
+	if (IsEnPassantCapturePossible())
+	{
+		key += std::to_string(m_enPassantTarget->row);
+		key += std::to_string(m_enPassantTarget->col);
+	}
+
+	return key;
+}
+
+bool Board::IsEnPassantCapturePossible() const
+{
+	if (!m_enPassantTarget)
+	{
+		return false;
+	}
+
+	for (const Position& square : GetAllSquares())
+	{
+		// The target square is empty, so a pawn from another column can only reach it by capturing en passant.
+		const PiecePtr& piece = m_squares[square.row][square.col];
+		if (piece && piece->GetType() == EPieceType::Pawn && square.col != m_enPassantTarget->col
+			&& Contains(GetLegalMoves(square), *m_enPassantTarget))
+		{
+			return true;
+		}
+	}
 	return false;
 }
