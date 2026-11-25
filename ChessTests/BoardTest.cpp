@@ -31,7 +31,7 @@ namespace
 	}
 }
 
-// ---------------------------------------------------------------- starting position
+//  starting position
 
 TEST(BoardSetupTest, Reset_PlacesBackRanksInOrder)
 {
@@ -125,7 +125,7 @@ TEST(BoardSetupTest, StartingPosition_PawnKnightAndBlockedPieces)
 	EXPECT_THAT(board.GetLegalMoves(At("e1")), IsEmpty());
 }
 
-// ---------------------------------------------------------------- bounds and empty squares
+// bounds and empty squares
 
 TEST(BoardAccessTest, GetPiece_OutsideBoard_Throws)
 {
@@ -185,7 +185,7 @@ TEST(BoardAccessTest, MovePiece_OntoEnemyPiece_CapturesIt)
 	EXPECT_TRUE(board.IsEmpty(At("d4")));
 }
 
-// ---------------------------------------------------------------- rook, bishop, queen
+// rook, bishop, queen
 
 TEST(SlidingPieceMovesTest, Rook_OnOpenBoard_MovesAlongRankAndFile)
 {
@@ -245,7 +245,7 @@ TEST(SlidingPieceMovesTest, Queen_IsBlockedInEveryDirectionAtTheStart)
 	EXPECT_THAT(board.GetLegalMoves(At("d1")), UnorderedElementsAreArray(Squares({ "e2", "f3", "g4", "h5" })));
 }
 
-// ---------------------------------------------------------------- knight
+// knight
 
 TEST(KnightMovesTest, InTheCenter_HasEightJumps)
 {
@@ -275,7 +275,7 @@ TEST(KnightMovesTest, JumpsOverPieces_CapturesEnemy_NotOwn)
 	EXPECT_THAT(board.GetLegalMoves(At("a1")), UnorderedElementsAreArray(Squares({ "c2" })));
 }
 
-// ---------------------------------------------------------------- king
+// king
 
 TEST(KingMovesTest, InTheCenter_MovesOneSquareInEveryDirection)
 {
@@ -317,7 +317,7 @@ TEST(KingMovesTest, CanCaptureAnUndefendedAttacker_ButNotADefendedOne)
 	EXPECT_THAT(defended.GetLegalMoves(At("e1")), IsEmpty());
 }
 
-// ---------------------------------------------------------------- pawn
+// pawn
 
 TEST(PawnMovesTest, White_FromStartRow_MovesOneOrTwoSquaresUp)
 {
@@ -393,7 +393,7 @@ TEST(PawnMovesTest, OnTheEdgeFile_DoesNotWrapAround)
 	EXPECT_THAT(board.GetLegalMoves(At("a4")), UnorderedElementsAreArray(Squares({ "a5", "b5" })));
 }
 
-// ---------------------------------------------------------------- en passant
+// en passant
 
 TEST(EnPassantTest, RightAfterTheDoubleStep_CaptureIsAllowed)
 {
@@ -460,7 +460,7 @@ TEST(EnPassantTest, AfterASingleStep_ThereIsNoEnPassant)
 	EXPECT_THAT(board.GetLegalMoves(At("e5")), UnorderedElementsAreArray(Squares({ "e6" })));
 }
 
-// ---------------------------------------------------------------- castling
+// castling
 
 namespace
 {
@@ -591,7 +591,7 @@ TEST(CastlingTest, NotAllowed_WhenTheKingIsNotOnItsStartingSquare)
 		"c1", "c2", "d2", "e1", "e2" })));
 }
 
-// ---------------------------------------------------------------- check, pins, endings
+// check, pins, endings
 
 TEST(CheckTest, IsInCheck_DetectsEveryKindOfAttacker)
 {
@@ -731,7 +731,7 @@ TEST(EndingTest, StartingPosition_BothSidesHaveMoves)
 	EXPECT_TRUE(board.HasAnyLegalMove(Black));
 }
 
-// ---------------------------------------------------------------- copying
+// copying
 
 TEST(BoardCopyTest, Copy_HasTheSamePiecesOnTheSameSquares)
 {
@@ -786,7 +786,7 @@ TEST(BoardCopyTest, Assignment_ReplacesThePositionWithAnIndependentCopy)
 	EXPECT_TRUE(target.IsEmpty(At("e1")));
 }
 
-// ---------------------------------------------------------------- attacks, king, en passant target
+// attacks, king, en passant target
 
 TEST(BoardQueryTest, IsSquareAttacked_ByTheGivenColorOnly)
 {
@@ -869,7 +869,7 @@ TEST(BoardQueryTest, PlacePiece_ReplacesOrEmptiesTheSquare)
 	EXPECT_THROW(board.PlacePiece(Position{ 8, 8 }, nullptr), OutOfBoundsException);
 }
 
-// ---------------------------------------------------------------- castling rights
+// castling rights
 
 TEST(CastlingRightTest, StartingPosition_AllFourRightsExist)
 {
@@ -926,7 +926,7 @@ TEST(CastlingRightTest, AfterCastling_TheRightIsGone)
 	EXPECT_TRUE(board.GetPiece(At("f1"))->HasMoved());
 }
 
-// ---------------------------------------------------------------- insufficient material
+// insufficient material
 
 TEST(InsufficientMaterialTest, PositionsThatCanNeverEndInMate)
 {
@@ -977,7 +977,7 @@ TEST(InsufficientMaterialTest, PositionsWhereMateIsStillPossible)
 		{ "b1", EPieceType::Knight, White }, { "c1", EPieceType::Bishop, White } }).HasInsufficientMaterial());
 }
 
-// ---------------------------------------------------------------- position key
+// position key
 
 TEST(PositionKeyTest, SamePosition_GivesTheSameKey)
 {

@@ -76,7 +76,7 @@ App::App(IGamePtr game)
 	, m_mainMenu(
 		m_menuFont,
 		"Welcome to our chess game",
-		{ { "Play", EMenuAction::Play }, { "Settings", EMenuAction::Settings } },
+		{ { "Play", EMenuAction::Play }, { "Settings", EMenuAction::Settings }, { "Exit", EMenuAction::Exit } },
 		sf::Vector2u(LOGICAL_SIZE))
 	, m_timeControlMenu(
 		m_menuFont,
@@ -255,6 +255,9 @@ void App::ApplyMenuAction(EMenuAction action)
 		break;
 	case EMenuAction::Back:
 		m_screen = EScreen::MainMenu;
+		break;
+	case EMenuAction::Exit:
+		m_window.close();
 		break;
 	case EMenuAction::None:
 		break;

@@ -16,7 +16,8 @@ enum class EMenuAction
 	PlayRapid,
 	Settings,
 	ToggleFullscreen,
-	Back
+	Back,
+	Exit
 };
 
 struct MenuEntry
